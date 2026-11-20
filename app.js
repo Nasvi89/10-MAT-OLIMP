@@ -1026,10 +1026,12 @@ function snakePts(cols){
 function snakePathBetween(a,b,row,cols){
   var rowA=Math.floor(a._i/cols), rowB=Math.floor(b._i/cols);
   if(rowA===rowB){
-    // Прямая линия между узлами одной строки
-    return ' M '+a.x+' '+a.y+' L '+b.x+' '+b.y;
+    // Волнистая «змейка» между узлами одной строки: легкий изгиб вверх
+    var mx=(a.x+b.x)/2;
+    var cy0=(a.y+b.y)/2 - 26;
+    return ' M '+a.x+' '+a.y+' Q '+mx+' '+cy0+' '+b.x+' '+b.y;
   } else {
-    // Поворот на следующую строку: мягкая дуга между последним и первым узлом соседних строк
+    // Поворот на следующую строку: мягкая дуга
     var mx=(a.x+b.x)/2;
     var cpx=(row%2===0)?Math.max(a.x,b.x)+34:Math.min(a.x,b.x)-34;
     var cpy=(a.y+b.y)/2;
