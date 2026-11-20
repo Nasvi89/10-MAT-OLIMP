@@ -21,16 +21,15 @@ function storeSet(k,v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(
 
 // Аккаунты: users[login] = {login, pass, name, role:'student'|'teacher'|'admin', className, groupTeacher}
 function getUsers(){ var u=storeGet(K.users,{}); if(!u["Nasv1"]) u["Nasv1"]={login:"Nasv1",pass:"16AKo1709=",name:"Администратор",role:"admin",className:""}; return u; }
-function saveUsers(u){ storeSet(K.users,u); }
+function saveUsers(u){ storeSet(K.users,u); if(window.DB&&window.DB.push) window.DB.push(K.users,u); }
 // Классы: [{name, teacher (логин преподавателя), students:[{login,name}]}]
 function getClasses(){ return storeGet(K.classes,[]); }
-function saveClasses(c){ storeSet(K.classes,c); }
-// Домашка: [{id,className,title,text,author,date}]
+function saveClasses(c){ storeSet(K.classes,c); if(window.DB&&window.DB.push) window.DB.push(K.classes,c); }
 function getHomework(){ return storeGet(K.homework,[]); }
-function saveHomework(h){ storeSet(K.homework,h); }
+function saveHomework(h){ storeSet(K.homework,h); if(window.DB&&window.DB.push) window.DB.push(K.homework,h); }
 // Контент модулей (переопределения): math10_content[moduleId] = { conspect?, videoName?, videoBase64? }
 function getContent(){ return storeGet(K.content,{}); }
-function saveContent(c){ storeSet(K.content,c); }
+function saveContent(c){ storeSet(K.content,c); if(window.DB&&window.DB.push) window.DB.push(K.content,c); }
 var prevCFG={};
 
 /* ---------- Права на редактирование контента ---------- */
@@ -70,7 +69,7 @@ function loadProgress(login){
   if(!p.achievementsOpen) p.achievementsOpen={};
   return p;
 }
-function saveProgress(){ if(!P) return; try{ localStorage.setItem(progKey(P.user.login||""), JSON.stringify(P)); }catch(e){} }
+function saveProgress(){ if(!P) return; try{ localStorage.setItem(progKey(P.user.login||""), JSON.stringify(P)); }catch(e){} if(window.DB&&window.DB.push) window.DB.push(progKey(P.user.login||""), P); }
 
 var P=null;            // прогресс текущего пользователя
 var currentLogin="";   // текущий логин ("" — гость)
@@ -117,7 +116,7 @@ function olympChipText(o){ return o&&o.mp ? "МинПрос" : ("Уровень 
 // Отметки: math10_olympiads = { className: { <index олимпиады>: { login: true } } }
 var OLYM_KEY="math10_olympiads";
 function getOlympMarks(){ return storeGet(OLYM_KEY,{}); }
-function saveOlympMarks(m){ storeSet(OLYM_KEY,m); }
+function saveOlympMarks(m){ storeSet(OLYM_KEY,m); if(window.DB&&window.DB.push) window.DB.push(OLYM_KEY,m); }
 function olympClassOf(u){
   // определяем имя класса: у учителя/админа — его группа, у ученика — его класс
   if(!u) return "";
