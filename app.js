@@ -2360,36 +2360,43 @@ function renderClassHomework(cls, u){
 
   var html='<div class="panel"><div class="view-head-row"><div class="view-head"><h3>📚 Домашнее задание</h3>'
     +'<p class="muted" style="font-size:12.5px">Выдай задание классу «'+escapeHtml(cls.name)+'». Ученики увидят его у себя в «Траектории».</p></div></div>';
-  // Форма выдачи с выбором задач из банка, своими задачами и файлом
-  var bankTree="";
-  try{
-    var _bt=allTasks();
-    var _byMod={};
-    _bt.forEach(function(t){ if(!t||!t.id) return; var m=(t.module||t.theme||"прочее"); (_byMod[m]=_byMod[m]||[]).push(t); });
-    bankTree='<div class="hw-bank"><div class="hw-bank-label">Добавить задачи из банка:</div><div class="hw-bank-list">';
-    Object.keys(_byMod).forEach(function(m){
-      var items=_byMod[m];
-      bankTree+='<div class="hw-bank-group"><div class="hw-bank-mod">'+escapeHtml(m)+'</div>';
-      items.forEach(function(t){ bankTree+='<label class="hw-bank-task"><input type="checkbox" value="'+escAttr(t.id)+'"><span>'+escapeHtml(String(t.text||"").slice(0,90))+'</span></label>'; });
-      bankTree+='</div>';
-    });
-    bankTree+='</div></div>';
-  }catch(e){ bankTree=''; }
+  // Форма выдачи: как на «Решу ЕГЭ» — тема + уровень + количество, потом составить
+  function _modName(id){ var m=olympModuleMeta(id); return m?(m.no+". "+m.name):id; }
+  function _lvlName(id){ var l=OLYMP_LEVELS.filter(function(x){return x.id===id;})[0]; return l?l.name:id; }
+  var modOpts=OLYMP_MODULES.map(function(m){ return '<option value="'+m.id+'">'+escapeHtml(m.no+". "+m.name)+'</option>'; }).join("");
+  var lvlOpts=OLYMP_LEVELS.map(function(l){ return '<option value="'+l.id+'">'+escapeHtml(l.name)+'</option>'; }).join("");
   html+='<div class="hw-form">'
-    +'<div class="form-row"><label>Заголовок</label><input id="hwf-title" placeholder="Например: Задачи по производной" style="width:100%"></div>'
-    +'<div class="form-row"><label>Пояснение (необязательно)</label><textarea id="hwf-text" rows="3" placeholder="Комментарий к заданию…" style="width:100%"></textarea></div>'
-    +bankTree
-    +'<div class="hw-own"><div class="form-row"><label>Добавить свою задачу</label>'
+    +'<div class="form-row"><label>Заголовок (тема задания)</label><input id="hwf-title" placeholder="Например: Задачи по производной" style="width:100%"></div>'
+    +'<div class="form-row"><label>Пояснение (необязательно)</label><textarea id="hwf-text" rows="2" placeholder="Комментарий к заданию…" style="width:100%"></textarea></div>'
+    +'<div class="hw-reshe-box">'
+    +'<div class="hw-reshe-head">📚 Подборка задач из банка</div>'
+    +'<div class="form-row" style="gap:8px;flex-wrap:wrap"><label style="min-width:60px">Тема</label>'
+    +'<select id="hwf-mod" style="flex:1;min-width:150px">'+modOpts+'</select></div>'
+    +'<div class="form-row" style="gap:8px;flex-wrap:wrap"><label style="min-width:60px">Сложность</label>'
+    +'<select id="hwf-lvl" style="flex:1;min-width:150px">'+lvlOpts+'</select></div>'
+    +'<div class="form-row" style="gap:8px;flex-wrap:wrap"><label style="min-width:60px">Количество</label>'
+    +'<input id="hwf-count" type="number" min="1" max="20" value="5" style="width:90px"></div>'
+    +'<div class="form-actions" style="margin-top:8px;gap:8px;flex-wrap:wrap">'
+    +'<button class="btn" id="hwf-shuffle">🎲 Случайная подборка</button>'
+    +'<button class="btn btn-primary" id="hwf-add">📤 Составить ДЗ и выдать</button>'
+    +'</div>'
+    +'<div class="muted" id="hwf-total" style="font-size:12px;margin-top:6px">в этой теме и сложности доступно задач: —</div>'
+    +'</div>'
+
+    +'<div class="hw-reshe-preview" id="hwf-preview" style="display:none">'
+    +'<div class="hw-sec-title">📝 Собранные задачи ('+escapeHtml(cls.name)+')</div>'
+    +'<div id="hwf-preview-list"></div>'
+    +'</div>'
+
+    +'<div class="hw-own"><div class="form-row"><label>Добавить свою задачу (необязательно)</label>'
     +'<input id="hwf-own-inp" placeholder="Текст задачи (можно с формулой $\\frac12$)" style="width:100%"></div>'
     +'<button class="btn btn-sm" id="hwf-own-add">＋ Добавить в список</button></div>'
     +'<div class="hw-own-list" id="hwf-own-list"></div>'
-    +'<div class="form-row" style="align-items:center"><label style="margin-bottom:0">Прикрепить файл</label>'
+    +'<div class="form-row" style="align-items:center"><label style="margin-bottom:0">Прикрепить файл (необязательно)</label>'
     +'<label class="btn btn-sm" style="margin:0;display:inline-flex;align-items:center;cursor:pointer">⬆ Выбрать файл'
     +'<input type="file" id="hwf-file" accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx,.xls,.xlsx" style="display:none"></label>'
     +'<span class="muted" id="hwf-fname" style="font-size:12px"></span></div>'
     +'<div class="form-row"><label>Срок сдачи (необязательно)</label><input id="hwf-due" type="date" style="width:100%"></div>'
-    +'<div class="form-actions" style="margin-top:10px"><button class="btn btn-primary" id="hwf-add">📤 Выдать задание</button>'
-    +'<span class="muted" id="hwf-picked-count" style="font-size:12px;margin-left:10px"></span></div>'
     +'</div>';
   html+='</div>';
 
@@ -2413,11 +2420,43 @@ function renderClassHomework(cls, u){
   box.innerHTML=html;
 
   var add=$("#hwf-add");
-  // Свои задачи в список ДЗ
+  var pickedTasks=[];
   var ownCount=0;
+  // Счётчик доступных задач по теме/уровню
+  var updTotal=function(){
+    var md=$("#hwf-mod")?$("#hwf-mod").value:"";
+    var lv=$("#hwf-lvl")?$("#hwf-lvl").value:"";
+    var arr=allTasks().filter(function(t){ if(!t||!t.id) return false; if(md && t.module!==md) return false; if(lv && t.level!==lv) return false; return true; });
+    var cnt=$("#hwf-total"); if(cnt) cnt.textContent="в этой теме и сложности доступно задач: "+arr.length;
+  };
+  var modSel=$("#hwf-mod"); var lvlSel=$("#hwf-lvl");
+  if(modSel) modSel.addEventListener("change",updTotal);
+  if(lvlSel) lvlSel.addEventListener("change",updTotal);
+  updTotal();
+  // Случайная подборка
+  var shuffle=$("#hwf-shuffle");
+  if(shuffle) shuffle.addEventListener("click",function(){
+    var md=$("#hwf-mod")?$("#hwf-mod").value:"";
+    var lv=$("#hwf-lvl")?$("#hwf-lvl").value:"";
+    var cnt=parseInt(($("#hwf-count")?$("#hwf-count").value:"5")||5,10);
+    var pool=allTasks().filter(function(t){ if(!t||!t.id) return false; if(t.module!==md) return false; if(t.level!==lv) return false; return true; });
+    if(!pool.length){ toast("В этой теме и сложности пока нет задач"); return; }
+    var shuffled=pool.slice();
+    // перемешивание
+    for(var i=shuffled.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var tmp=shuffled[i]; shuffled[i]=shuffled[j]; shuffled[j]=tmp; }
+    pickedTasks=shuffled.slice(0,Math.min(cnt,shuffled.length)).map(function(t){return t.id;});
+    var items=pickedTasks.map(function(id){ var t=allTasks().filter(function(x){return x.id===id;})[0]; return t; }).filter(Boolean);
+    var pv=$("#hwf-preview"); var pl=$("#hwf-preview-list");
+    if(pv) pv.style.display="block";
+    if(pl) pl.innerHTML=items.map(function(t,i){
+      return '<div class="hw-prev-tsk"><span class="hw-prev-n">'+(i+1)+'.</span><span class="hw-prev-t">'+inlineFmt(escapeHtml(t.text))+'</span></div>';
+    }).join("");
+    toast("Подобрано: "+pickedTasks.length+" задач");
+  });
+  // Свои задачи в список ДЗ
   var updPickedCount=function(){
-    var n=document.querySelectorAll("#cl-content .hw-bank-task input:checked").length;
-    var cnt=$("#hwf-picked-count"); if(cnt) cnt.textContent=(n?("выбрано из банка: "+n+" · "):"")+"своих задач: "+ownCount;
+    var cnt=$("#hwf-picked-count"); if(!cnt) return;
+    cnt.textContent=(pickedTasks.length?("из банка: "+pickedTasks.length+" · "):"")+"своих задач: "+ownCount;
   };
   var addOwn=function(){
     var inp=$("#hwf-own-inp"); if(!inp) return;
@@ -2433,7 +2472,6 @@ function renderClassHomework(cls, u){
   var ownAddBtn=$("#hwf-own-add"); if(ownAddBtn) ownAddBtn.addEventListener("click",addOwn);
   var ownInp=$("#hwf-own-inp");
   if(ownInp) ownInp.addEventListener("keydown",function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); addOwn(); } });
-  $$("#cl-content .hw-bank-task input").forEach(function(cb){ cb.addEventListener("change",updPickedCount); });
   // Файл для ДЗ
   var hwFileData=null;
   var fileInput=$("#hwf-file");
@@ -2451,10 +2489,10 @@ function renderClassHomework(cls, u){
     var title=($("#hwf-title")?$("#hwf-title").value:"").trim();
     var text=($("#hwf-text")?$("#hwf-text").value:"").trim();
     if(!title){ toast("Введи заголовок задания"); return; }
-    var tasks=[], ownTasks=[];
-    $$("#cl-content .hw-bank-task input:checked").forEach(function(cb){ tasks.push(cb.value); });
+    var tasks=pickedTasks.slice();
+    var ownTasks=[];
     $$("#hwf-own-list .hw-own-item").forEach(function(it){ ownTasks.push(it.querySelector(".hw-own-txt").textContent); });
-    if(!tasks.length && !ownTasks.length && !text){ toast("Добавь задачи из банка, свою задачу или пояснение"); return; }
+    if(!tasks.length && !ownTasks.length && !text){ toast("Сначала собери задачи из банка или добавь свою"); return; }
     var due=$("#hwf-due")?$("#hwf-due").value:"";
     var hw={id:"hw"+Date.now().toString(36),
       className:cls.name,

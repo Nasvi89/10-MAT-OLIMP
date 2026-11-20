@@ -838,3 +838,14 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
   .view-head p{width:100%;overflow-wrap:anywhere}
   .main{overflow-x:clip}
 }
+
+/* -------- Подборка задач для ДЗ (как на «Решу ЕГЭ») -------- */
+.hw-reshe-box{background:#f7f8fd;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-top:10px}
+.hw-reshe-head{font-weight:800;font-size:14px;margin-bottom:10px;color:var(--primary)}
+.hw-reshe-preview{border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-top:12px;background:#fff}
+.hw-prev-tsk{display:flex;gap:8px;padding:7px 0;border-bottom:1px dashed #eef0f8}
+.hw-prev-tsk:last-child{border-bottom:none}
+.hw-prev-n{flex:none;font-weight:800;color:var(--primary);width:20px}
+.hw-prev-t{flex:1;font-size:13.5px}
+.hw-own-item{display:flex;align-items:center;gap:8px;background:#f7f8fd;border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:6px;font-size:13px}
+.hw-own-item .hw-own-txt{flex:1}
