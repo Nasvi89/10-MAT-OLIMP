@@ -61,7 +61,7 @@ window.DB = {
   // Синхронная выгрузка всей базы этого курса из Supabase в localStorage
   hydrateSync: function(){
     try{
-      if(!url||!key){ window.DB.err="Нет конфигурации БД (db-config.js)"; return; }
+      if(!url||!key){ window.DB.err="Не загружены параметры запуска"; return; }
       var rows = this.fetchAllSync();
       if(!rows || !rows.length) return;
       rows.forEach(function(r){
