@@ -1101,10 +1101,10 @@ function hideSnakeTip(){ var e=$("#snake-tip"); if(e) e.style.display="none"; }
 /* ---------- Дашборд ---------- */
 function hwContentHtml(hw){
   var out="";
-  if(hw.text) out+='<div class="hw-text">'+escapeHtml(hw.text)+'</div>';
+  if(hw.text) out+='<div class="hw-text">'+inlineFmt(escapeHtml(hw.text))+'</div>';
   if(hw.ownTasks && hw.ownTasks.length){
     out+='<div class="hw-own-block"><div class="hw-sec-title">📝 Свои задачи</div><ol class="hw-tasks-list">';
-    hw.ownTasks.forEach(function(t){ out+='<li>'+escapeHtml(t)+'</li>'; });
+    hw.ownTasks.forEach(function(t){ out+='<li>'+inlineFmt(escapeHtml(t))+'</li>'; });
     out+='</ol></div>';
   }
   if(hw.tasks && hw.tasks.length){
@@ -1112,7 +1112,11 @@ function hwContentHtml(hw){
     var items=[];
     hw.tasks.forEach(function(id){ var t=bank.filter(function(x){return x.id===id;})[0]; if(t) items.push(t); });
     out+='<div class="hw-bank-block"><div class="hw-sec-title">📚 Задачи из банка</div><ol class="hw-tasks-list">';
-    items.forEach(function(t,i){ out+='<li><div class="hw-task">'+inlineFmt(escapeHtml(t.text))+(t.options?'<div class="hw-task-opts">'+t.options.map(function(o,j){return (j+1)+') '+inlineFmt(escapeHtml(o));}).join(" · ")+'</div>':"")+'</div></li>'; });
+    items.forEach(function(t,i){
+      out+='<li><div class="hw-task">'+inlineFmt(escapeHtml(t.text))
+        +(t.options?'<div class="hw-task-opts"><span class="hw-opts-label">Варианты ответа:</span>'+t.options.map(function(o,j){return (j+1)+') '+inlineFmt(escapeHtml(o));}).join('&nbsp;&nbsp;')+'</div>':"")
+        +'</div></li>';
+    });
     out+='</ol></div>';
   }
   if(hw.file){
@@ -1140,6 +1144,7 @@ function renderHomework(){
       +hwContentHtml(hw)+'</div>';
   });
   box.innerHTML=h;
+  applyMath(box);
 }
 function renderDashboard(){
   var user=currentUser();
@@ -2418,6 +2423,7 @@ function renderClassHomework(cls, u){
   html+='</div>';
 
   box.innerHTML=html;
+  applyMath(box);
 
   var add=$("#hwf-add");
   var pickedTasks=[];
@@ -2590,6 +2596,7 @@ function renderStudentStats(){
   html+='<div class="mystat-course">'+progHtml+'</div></div>';
 
   body.innerHTML=html;
+  applyMath(body);
 }
 
 /* ---------- «Серверный» файл: экспорт/импорт базы под пароль админа ---------- */

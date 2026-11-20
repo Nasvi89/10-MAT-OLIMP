@@ -849,3 +849,13 @@ button{font-family:inherit;cursor:pointer;border:none;background:none;color:inhe
 .hw-prev-t{flex:1;font-size:13.5px}
 .hw-own-item{display:flex;align-items:center;gap:8px;background:#f7f8fd;border:1px solid var(--line);border-radius:8px;padding:6px 8px;margin-top:6px;font-size:13px}
 .hw-own-item .hw-own-txt{flex:1}
+
+/* -------- Рендер содержимого домашнего задания -------- */
+.hw-bank-block,.hw-own-block{margin-top:10px}
+.hw-sec-title{font-weight:800;font-size:13px;margin-bottom:6px;color:#3a4263}
+.hw-tasks-list{margin:0;padding-left:20px}
+.hw-tasks-list li{margin-bottom:10px}
+.hw-task{font-size:14px;line-height:1.5}
+.hw-task-opts{margin-top:6px;padding:8px 10px;background:#f7f8fd;border:1px solid var(--line);border-radius:8px;font-size:13px;line-height:1.7}
+.hw-opts-label{font-weight:700;color:#3a4263;margin-right:6px}
+.hw-text{margin:6px 0;line-height:1.55}
