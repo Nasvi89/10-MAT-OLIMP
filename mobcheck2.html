@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html><head><meta charset="utf-8"></head>
+<body style="font-family:monospace;font-size:12px">
+<pre id="ow">waiting...</pre>
+<script>
+var ow = document.getElementById('ow');
+var ifr = document.createElement('iframe');
+ifr.src = 'http://127.0.0.1:8765/index.html';
+ifr.style.width = '375px';
+ifr.style.height = '900px';
+ifr.style.border = '0';
+document.body.appendChild(ifr);
+ifr.onload = function(){
+  setTimeout(function(){
+    try{
+      var d = ifr.contentDocument, w = d.defaultView;
+      var docScr = d.documentElement.scrollWidth;
+      var inner = w.innerWidth || 375;
+      var m = {}; m['innerWidth']=inner; m['docScrollWidth']=docScr; m['overflowX']=docScr>inner;
+      var inputs = d.querySelectorAll('input'); var rects=[];
+      for(var i=0;i<inputs.length;i++){ var r=inputs[i].getBoundingClientRect(); rects.push((inputs[i].id||'#'+i)+' right='+Math.round(r.right)); }
+      m['inputs']=rects;
+      var pc=d.querySelector('.profile-card'); if(pc){var pr=pc.getBoundingClientRect(); m['profileCard']='left='+Math.round(pr.left)+' right='+Math.round(pr.right)+' w='+Math.round(pr.width);}
+      var pb=d.querySelector('.profile-banner'); if(pb){var br=pb.getBoundingClientRect(); m['banner']='left='+Math.round(br.left)+' right='+Math.round(br.right)+' w='+Math.round(br.width);}
+      ow.textContent = JSON.stringify(m, null, 2);
+    }catch(e){ ow.textContent='ERR '+e.message; }
+  }, 900);
+};
+</script>
+</body></html>
