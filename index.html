@@ -21,7 +21,7 @@
     <nav class="nav">
       <button class="nav-btn" data-view="dashboard">Траектория</button>
       <button class="nav-btn" data-view="modules">Блоки</button>
-      <button class="nav-btn" data-view="meeting" id="meeting-nav-btn">Блок с преподавателем</button>
+      
       <button class="nav-btn" data-view="bank">Банк задач</button>
       <button class="nav-btn" data-view="kodifikator">Формулы для ЕГЭ</button>
       <button class="nav-btn" data-view="classes" id="classes-nav-btn" style="display:none">Классы</button>
@@ -109,84 +109,6 @@
         <div id="mod-lesson" class="mod-lesson"></div>
         <!-- ЭТАП 2: ЗАДАЧИ -->
         <div id="mod-tasks" class="mod-tasks"></div>
-      </div>
-    </section>
-
-    <!-- МОДУЛЬ С ПРЕПОДАВАТЕЛЕМ -->
-    <section class="view" id="view-meeting">
-      <div class="view-head">
-        <h2>Блок с преподавателем</h2>
-        <p class="muted">Звонок (телемост), интерактивная доска и учебные материалы — всё связано с текущей темой.</p>
-      </div>
-
-      <div class="meeting-layout">
-
-        <!-- ЛЕВАЯ КОЛОНКА: созвон + доска -->
-        <div class="meeting-left">
-          <div class="panel">
-            <h3>📞 Созвон с преподавателем</h3>
-            <p class="muted" style="font-size:13px;margin-bottom:10px">Открой звонок в телемосте, а ниже используй интерактивную доску.</p>
-            <div class="telemost-box">
-              <div class="telemost-hero">
-                <div class="th-icon">📹</div>
-                <div class="th-title">Звонок в Яндекс.Телемосте</div>
-                <div class="th-sub">Яндекс.Телемост не позволяет встраивать звонок в страницу, поэтому он открывается в отдельной вкладке.</div>
-                <a class="btn btn-primary btn-lg" href="https://telemost.yandex.ru/j/64857306460563" target="_blank" rel="noopener">🔔 Открыть звонок</a>
-              </div>
-            </div>
-          </div>
-
-          <div class="panel" id="main-board-panel">
-            <div class="bb-head">
-              <div>
-                <h3>🎨 Интерактивная доска</h3>
-                <div class="muted" style="font-size:12.5px" id="bb-head-sub">Лист 1</div>
-              </div>
-              <div class="bb-actions">
-                <button class="btn btn-sm bb-btn" id="bb-invert" title="Инвертировать доску (белая/тёмная)">🌗 Инверт</button>
-                <button class="btn btn-sm bb-btn" id="bb-save">💾 Сохранить доску</button>
-              </div>
-            </div>
-
-            <!-- Панель инструментов -->
-            <div class="bb-toolbar">
-              <button class="bb-tool active" data-tool="pen" title="Рисовать">✏️</button>
-              <button class="bb-tool" data-tool="eraser" title="Стирать">🧽</button>
-              <button class="bb-tool" data-tool="rect" title="Прямоугольник">▭</button>
-              <button class="bb-tool" data-tool="ellipse" title="Овал">◯</button>
-              <button class="bb-tool" data-tool="line" title="Линия">╱</button>
-              <button class="bb-tool" data-tool="select" title="Выбрать картинку">🖼</button>
-              <span class="bb-sep"></span>
-              <button class="bb-tool" id="bb-addimg" title="Добавить картинку">➕🖼</button>
-              <span class="bb-sep"></span>
-              <input type="color" id="bb-color" value="#1c2340" title="Цвет маркера">
-              <span class="bb-color-val" id="bb-color-val">#1c2340</span>
-              <span class="bb-sep"></span>
-              <button class="bb-tool" id="bb-new" title="Новый лист">📄</button>
-              <button class="bb-tool" id="bb-undo" title="Отменить">↩️</button>
-              <button class="bb-tool" id="bb-clear" title="Очистить лист">🗑</button>
-              <input type="file" id="bb-imgfile" accept="image/*" hidden>
-            </div>
-
-            <!-- Листы -->
-            <div class="bb-sheets" id="bb-sheets"></div>
-
-            <!-- Холст -->
-            <div class="bb-canvas-wrap">
-              <canvas id="bb-canvas" width="1200" height="700"></canvas>
-            </div>
-          </div>
-        </div>
-
-        <!-- ПРАВАЯ КОЛОНКА: учебные материалы -->
-        <div class="meeting-right">
-          <div class="panel">
-            <h3>📚 Учебные материалы</h3>
-            <p class="muted" style="font-size:13px;margin-bottom:10px">Конспекты, листы и сохранённые доски по теме.</p>
-            <div id="mmaterials-list" class="materials-list"></div>
-          </div>
-        </div>
-
       </div>
     </section>
 
