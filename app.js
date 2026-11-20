@@ -2457,6 +2457,7 @@ function renderClassHomework(cls, u){
     if(pl) pl.innerHTML=items.map(function(t,i){
       return '<div class="hw-prev-tsk"><span class="hw-prev-n">'+(i+1)+'.</span><span class="hw-prev-t">'+inlineFmt(escapeHtml(t.text))+'</span></div>';
     }).join("");
+    if(pl) applyMath(pl);
     toast("Подобрано: "+pickedTasks.length+" задач");
   });
   // Свои задачи в список ДЗ
