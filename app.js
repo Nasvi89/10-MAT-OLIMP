@@ -25,7 +25,7 @@ function saveUsers(u){ storeSet(K.users,u); if(window.DB&&window.DB.push) window
 // Классы: [{name, teacher (логин преподавателя), students:[{login,name}]}]
 function getClasses(){ return storeGet(K.classes,[]); }
 function saveClasses(c){ storeSet(K.classes,c); if(window.DB&&window.DB.push) window.DB.push(K.classes,c); }
-function getHomework(){ return storeGet(K.homework,[]); }
+function getHomework(){ var h=storeGet(K.homework,[]); return Array.isArray(h)?h:[]; }
 function saveHomework(h){ storeSet(K.homework,h); if(window.DB&&window.DB.push) window.DB.push(K.homework,h); }
 // Контент модулей (переопределения): math10_content[moduleId] = { conspect?, videoName?, videoBase64? }
 function getContent(){ return storeGet(K.content,{}); }
@@ -1011,40 +1011,52 @@ var presFolder="Каталог - Видеоуроки";
 function presSrcPath(){ var b=location.href.split("/").slice(0,-1).join("/"); return b+"/"+encodeURIComponent(presFolder)+"/"; }
 
 /* ---------- Мини-карта: волновая змейка ---------- */
-var SNAKE_COLS=6, SNAKE_R=27, SNAKE_SX=100, SNAKE_SY=108;
-function snakePts(){
+var SNAKE_R=42, SNAKE_SX=220, SNAKE_SY=170, SNAKE_PAD=90;
+function snakePts(cols){
+  cols=cols||1;
   var pts=[];
   OLYMP_MODULES.forEach(function(m,i){
-    var r=Math.floor(i/SNAKE_COLS), k=i%SNAKE_COLS;
-    var x = r%2===0 ? SNAKE_R+6+k*SNAKE_SX : SNAKE_R+6+(SNAKE_COLS-1-k)*SNAKE_SX;
-    var y = 48 + r*SNAKE_SY + (i%2===0 ? -9 : 9);
+    var r=Math.floor(i/cols), k=i%cols;
+    var x = r%2===0 ? SNAKE_PAD+k*SNAKE_SX : SNAKE_PAD+(cols-1-k)*SNAKE_SX;
+    var y = 78 + r*SNAKE_SY;
     pts.push({x:x,y:y,mod:m});
   });
   return pts;
 }
-function snakePathBetween(a,b,row){
-  var mx=(a.x+b.x)/2, my=(a.y+b.y)/2;
-  var cy0=my-22;
-  var rowA=Math.floor(a._i/SNAKE_COLS), rowB=Math.floor(b._i/SNAKE_COLS);
-  var cpx,cpy;
-  if(rowA===rowB){ cpx=mx; cpy=cy0; }
-  else { var cx=(row%2===0)?Math.max(a.x,b.x)+28:Math.min(a.x,b.x)-28; cpx=cx; cpy=my; }
-  return ' M '+a.x+' '+a.y+' Q '+cpx+' '+cpy+' '+b.x+' '+b.y;
+function snakePathBetween(a,b,row,cols){
+  var rowA=Math.floor(a._i/cols), rowB=Math.floor(b._i/cols);
+  if(rowA===rowB){
+    // Прямая линия между узлами одной строки
+    return ' M '+a.x+' '+a.y+' L '+b.x+' '+b.y;
+  } else {
+    // Поворот на следующую строку: мягкая дуга между последним и первым узлом соседних строк
+    var mx=(a.x+b.x)/2;
+    var cpx=(row%2===0)?Math.max(a.x,b.x)+34:Math.min(a.x,b.x)-34;
+    var cpy=(a.y+b.y)/2;
+    return ' M '+a.x+' '+a.y+' Q '+cpx+' '+cpy+' '+b.x+' '+b.y;
+  }
 }
 function indexOfPt(p){ return p._i; }
 function renderMinimap(){
   var wrap=$("#minimap"); if(!wrap) return;
   if(typeof OLYMP_MODULES==="undefined") return;
   if(!currentUser()){ wrap.innerHTML=''; return; }
-  var pts=snakePts(); pts.forEach(function(p,i){p._i=i;});
-  var n=pts.length, rowsN=Math.ceil(n/SNAKE_COLS);
-  var W=SNAKE_COLS*SNAKE_SX+SNAKE_R*2+8, H=rowsN*SNAKE_SY+40;
+  var n=OLYMP_MODULES.length;
+  // Число колонок подбираем под количество модулей, чтобы кружки заполняли ширину и не теснились
+  var cols = n<=2 ? n : (n<=4 ? 3 : (n<=6 ? 4 : 6));
+  var pts=snakePts(cols); pts.forEach(function(p,i){p._i=i;});
+  var rowsN=Math.ceil(n/cols);
+  // Ширина по фактическому числу колонок, а не всегда по 6, чтобы не было пустоты справа
+  var W=(cols-1)*SNAKE_SX + SNAKE_PAD*2;
+  var H=rowsN*SNAKE_SY+60;
   var grey="",green="";
   for(var k=0;k<n-1;k++){
-    var row=Math.floor(k/SNAKE_COLS);
-    var d=snakePathBetween(pts[k],pts[k+1],row);
+    var row=Math.floor(k/cols);
+    var d=snakePathBetween(pts[k],pts[k+1],row,cols);
     var done=masterProg(pts[k].mod.id)>=100;
-    var seg='<path d="'+d+'" fill="none" stroke="'+(done?'#2f9e63':'#d7dcea')+'" stroke-width="5" stroke-linecap="round"/>';
+    var seg;
+    if(done) seg='<path d="'+d+'" fill="none" stroke="#2f9e63" stroke-width="6" stroke-linecap="round"/>';
+    else seg='<path d="'+d+'" fill="none" stroke="#d7dcea" stroke-width="6" stroke-linecap="round"/>';
     if(done) green+=seg; else grey+=seg;
   }
   var circles="";
@@ -1055,14 +1067,16 @@ function renderMinimap(){
     else if(unlocked){ fill="#fff"; stroke="#f4a825"; }
     else { fill="#fff"; stroke="#d7dcea"; }
     circles+='<g id="snake_'+p.mod.id+'" style="cursor:pointer">'
-      +'<circle cx="'+p.x+'" cy="'+p.y+'" r="'+SNAKE_R+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3"/>';
-    if(prog>=100) circles+='<text x="'+p.x+'" y="'+p.y+'" text-anchor="middle" dominant-baseline="central" font-size="22" fill="#fff">✓</text>';
-    else circles+='<text x="'+p.x+'" y="'+p.y+'" text-anchor="middle" dominant-baseline="central" font-size="22">'+p.mod.icon+'</text>';
-    circles+='<title>'+escAttr(p.mod.no+'. '+p.mod.name)+' — '+(prog>=100?'пройден':unlocked?prog+'%':'закрыт')+'</title></g>';
+      +'<circle cx="'+p.x+'" cy="'+p.y+'" r="'+SNAKE_R+'" fill="'+fill+'" stroke="'+stroke+'" stroke-width="3.5"/>';
+    if(prog>=100) circles+='<text x="'+p.x+'" y="'+p.y+'" text-anchor="middle" dominant-baseline="central" font-size="34" font-weight="700" fill="#fff">✓</text>';
+    else circles+='<text x="'+p.x+'" y="'+p.y+'" text-anchor="middle" dominant-baseline="central" font-size="30">'+p.mod.icon+'</text>';
+    circles+='<title>'+escAttr(p.mod.no+'. '+p.mod.name)+' — '+(prog>=100?'пройден':unlocked?prog+'%':'закрыт')+'</title>';
+    var shortName=(p.mod.no+'. '+p.mod.name).length>20 ? (p.mod.no+'. '+p.mod.name).slice(0,19)+'…' : (p.mod.no+'. '+p.mod.name);
+    circles+='<text x="'+p.x+'" y="'+(p.y-SNAKE_R-14)+'" text-anchor="middle" font-size="13" font-weight="700" fill="#5a6289">'+escAttr(shortName)+'</text></g>';
   });
   var last=pts[n-1];
-  circles+='<text x="'+last.x+'" y="'+(last.y+SNAKE_R+28)+'" text-anchor="middle" font-size="13" fill="#e8503a" font-style="italic" font-weight="700">финиш 🏁</text>';
-  wrap.innerHTML='<div class="snake-wrap"><svg viewBox="0 0 '+W+' '+H+'" style="width:'+W+'px;max-width:100%;height:auto;display:block">'+grey+green+circles+'</svg></div>';
+  circles+='<text x="'+last.x+'" y="'+(last.y+SNAKE_R+38)+'" text-anchor="middle" font-size="13" fill="#e8503a" font-style="italic" font-weight="700">финиш</text>';
+  wrap.innerHTML='<div class="snake-wrap"><svg viewBox="0 0 '+W+' '+H+'" style="width:100%;max-width:'+W+'px;height:auto;display:block">'+grey+green+circles+'</svg></div>';
   $$("#minimap svg g[id^=snake_]").forEach(function(g){
     g.addEventListener("mouseenter",function(){ showSnakeTip(g.getAttribute("id")); });
     g.addEventListener("mouseleave",function(){ hideSnakeTip(); });
@@ -1084,6 +1098,31 @@ function showSnakeTip(gid){
 function hideSnakeTip(){ var e=$("#snake-tip"); if(e) e.style.display="none"; }
 
 /* ---------- Дашборд ---------- */
+function hwContentHtml(hw){
+  var out="";
+  if(hw.text) out+='<div class="hw-text">'+escapeHtml(hw.text)+'</div>';
+  if(hw.ownTasks && hw.ownTasks.length){
+    out+='<div class="hw-own-block"><div class="hw-sec-title">📝 Свои задачи</div><ol class="hw-tasks-list">';
+    hw.ownTasks.forEach(function(t){ out+='<li>'+escapeHtml(t)+'</li>'; });
+    out+='</ol></div>';
+  }
+  if(hw.tasks && hw.tasks.length){
+    var bank=allTasks();
+    var items=[];
+    hw.tasks.forEach(function(id){ var t=bank.filter(function(x){return x.id===id;})[0]; if(t) items.push(t); });
+    out+='<div class="hw-bank-block"><div class="hw-sec-title">📚 Задачи из банка</div><ol class="hw-tasks-list">';
+    items.forEach(function(t,i){ out+='<li><div class="hw-task">'+inlineFmt(escapeHtml(t.text))+(t.options?'<div class="hw-task-opts">'+t.options.map(function(o,j){return (j+1)+') '+inlineFmt(escapeHtml(o));}).join(" · ")+'</div>':"")+'</div></li>'; });
+    out+='</ol></div>';
+  }
+  if(hw.file){
+    var isImg=/\.(png|jpe?g)$/i.test(hw.file.name||"");
+    out+='<div class="hw-file-block"><div class="hw-sec-title">📎 Файл</div>'
+      +(isImg?'<a href="'+hw.file.dataUrl+'" target="_blank" download="'+escapeHtml(hw.file.name)+'"><img src="'+hw.file.dataUrl+'" alt="'+escapeHtml(hw.file.name)+'" style="max-width:100%;max-height:260px;border-radius:8px"></a>'
+        :'<a class="btn btn-sm" href="'+hw.file.dataUrl+'" target="_blank" download="'+escapeHtml(hw.file.name)+'">⬇ '+escapeHtml(hw.file.name)+'</a>')
+      +'</div>';
+  }
+  return out;
+}
 function renderHomework(){
   var box=$("#dash-homework"); if(!box) return;
   if(!currentUser()){ box.innerHTML='<div class="muted" style="font-size:13px">Войди, чтобы видеть домашние задания.</div>'; return; }
@@ -1097,7 +1136,7 @@ function renderHomework(){
   list.forEach(function(hw){
     h+='<div class="hw-item"><div class="hw-title">'+escapeHtml(hw.title)+'</div>'
       +(hw.className?'<div class="hw-meta">группа: '+escapeHtml(hw.className)+'</div>':"")
-      +'<div class="hw-text">'+escapeHtml(hw.text)+'</div></div>';
+      +hwContentHtml(hw)+'</div>';
   });
   box.innerHTML=h;
 }
@@ -2344,9 +2383,8 @@ function renderClassHomework(cls, u){
         +'<div class="hw-title">'+escapeHtml(hw.title)+'</div>'
         +'<button class="btn btn-sm btn-ghost hw-del" data-hwid="'+escAttr(hw.id)+'" title="Удалить задание">🗑</button>'
         +'</div>'
-        +'<div class="hw-meta">класс: '+escapeHtml(hw.className||"Все")+' · '+(hw.author?escapeHtml(hw.author):"")+dl
-        +(hw.date?' · '+escapeHtml(String(hw.date).slice(0,10)):"")+'</div>'
-        +'<div class="hw-text">'+escapeHtml(hw.text)+'</div></div>';
++'<div class="hw-meta">класс: '+escapeHtml(hw.className||"Все")+' · '+(hw.author?escapeHtml(hw.author):"")+dl
+        +hwContentHtml(hw)+'</div></div>';
     });
   }
   html+='</div>';
@@ -2446,7 +2484,7 @@ function renderStudentStats(){
       var dl=hw.due?(' · срок: <b>'+escapeHtml(hw.due)+'</b>'):"";
       html+='<div class="hw-item"><div class="hw-title">'+escapeHtml(hw.title)+'</div>'
         +'<div class="hw-meta">'+(hw.author?escapeHtml(hw.author):"")+dl+(hw.date?(' · '+escapeHtml(String(hw.date).slice(0,10))):"")+'</div>'
-        +'<div class="hw-text">'+escapeHtml(hw.text)+'</div></div>';
+        +hwContentHtml(hw)+'</div>';
     });
   }
   html+='</div>';
@@ -2596,11 +2634,35 @@ function renderAdmin(){
   // Блок: добавление домашки
   var hwClassOpts='<option value="Все">Все ученики</option>';
   classes.forEach(function(cls){ hwClassOpts+='<option value="'+escAttr(cls.name)+'">'+escapeHtml(cls.name)+'</option>'; });
+  // Дерево банка задач для выбора в ДЗ
+  var bankTree="";
+  try{
+    var bt=allTasks();
+    var byMod={};
+    bt.forEach(function(t){ if(!t||!t.id) return; var m=(t.module||t.theme||"прочее"); (byMod[m]=byMod[m]||[]).push(t); });
+    bankTree='<div class="hw-bank"><div class="hw-bank-label">Добавить задачи из банка:</div><div class="hw-bank-list">';
+    Object.keys(byMod).forEach(function(m){
+      var items=byMod[m];
+      bankTree+='<div class="hw-bank-group"><div class="hw-bank-mod">'+escapeHtml(m)+'</div>';
+      items.forEach(function(t){ bankTree+='<label class="hw-bank-task"><input type="checkbox" value="'+escAttr(t.id)+'"><span>'+escapeHtml(String(t.text||"").slice(0,90))+'</span></label>'; });
+      bankTree+='</div>';
+    });
+    bankTree+='</div></div>';
+  }catch(e){ bankTree=''; }
   h.push('<div class="profile-card"><h3>📄 Добавить домашнее задание</h3>'
     +'<div class="form-row"><label>Группа</label><select id="hw-class">'+hwClassOpts+'</select></div>'
-    +'<div class="form-row"><label>Название</label><input id="hw-title" placeholder="Например: Задачи по закону Ома"></div>'
-    +'<div class="form-row"><label>Текст задания</label><textarea id="hw-text" rows="3" placeholder="Условия домашнего задания…"></textarea></div>'
-    +'<div class="form-actions"><button class="btn btn-primary" id="hw-add">Опубликовать</button></div></div>');
+    +'<div class="form-row"><label>Название</label><input id="hw-title" placeholder="Например: Задачи по производной"></div>'
+    +'<div class="form-row"><label>Пояснение (необязательно)</label><textarea id="hw-text" rows="2" placeholder="Комментарий к заданию…"></textarea></div>'
+    +bankTree
+    +'<div class="hw-own"><div class="form-row"><label>Добавить свою задачу</label>'
+    +'<input id="hw-own-inp" placeholder="Текст задачи (как хочешь — с формулой $\\frac12$ и др.)"></div>'
+    +'<button class="btn btn-sm" id="hw-own-add">＋ Добавить в список</button></div>'
+    +'<div class="hw-own-list" id="hw-own-list"></div>'
+    +'<div class="form-row"><label>Прикрепить файл (необязательно)</label>'
+    +'<input type="file" id="hw-file" accept=".pdf,.png,.jpg,.jpeg,.txt,.doc,.docx,.xls,.xlsx"></div>'
+    +'<div class="muted" id="hw-file-name" style="font-size:12px;margin-top:4px"></div>'
+    +'<div class="form-actions"><button class="btn btn-primary" id="hw-add">Опубликовать</button></div>'
+    +'<div id="hw-picked-count" class="muted" style="font-size:12px;margin-top:6px"></div></div>');
 
   // Блок: сервер (общая база)
   h.push('<div class="profile-card"><h3>🖥 Сервер (общая база данных)</h3>'
@@ -2726,11 +2788,50 @@ function bindAdminEvents(){
       renderAdmin(); toast("Преподаватель удалён");
     }
   };
+  // Добавление своей задачи в список ДЗ
+  var ownCount=0;
+  var updPickedCount=function(){
+    var n=document.querySelectorAll(".hw-bank-task input:checked").length;
+    var cnt=$("#hw-picked-count"); if(cnt) cnt.textContent="Выбрано из банка: "+n+" · своих задач: "+ownCount;
+  };
+  var addOwn=function(){
+    var inp=$("#hw-own-inp"); if(!inp) return;
+    var v=inp.value.trim(); if(!v){ toast("Введи текст задачи"); return; }
+    var key="own"+(++ownCount);
+    inp.value="";
+    var box=$("#hw-own-list"); if(box) box.insertAdjacentHTML("beforeend",
+      '<div class="hw-own-item" data-ownkey="'+key+'"><span class="hw-own-txt">'+escapeHtml(v)+'</span><button type="button" class="btn btn-sm btn-ghost hw-own-rm" title="Убрать">✕</button></div>');
+    var rm=box?box.lastElementChild:null;
+    if(rm){
+      rm.querySelector(".hw-own-rm").addEventListener("click",function(){ rm.remove(); updPickedCount(); });
+    }
+    updPickedCount();
+  };
+  $("#hw-own-add").addEventListener("click",addOwn);
+  $("#hw-own-inp").addEventListener("keydown",function(ev){ if(ev.key==="Enter"){ ev.preventDefault(); addOwn(); } });
+  $$(".hw-bank-task input").forEach(function(cb){ cb.addEventListener("change",updPickedCount); });
+  // Файл
+  var hwFileData=null;
+  var hwFileEl=$("#hw-file"); if(hwFileEl) hwFileEl.addEventListener("change",function(e){
+    var f=e.target.files&&e.target.files[0]; var nm=$("#hw-file-name");
+    if(!f){ hwFileData=null; if(nm) nm.textContent=""; return; }
+    if(f.size>5*1024*1024){ toast("Файл больше 5 МБ"); hwFileEl.value=""; return; }
+    var rd=new FileReader(); rd.onload=function(){ hwFileData={name:f.name, dataUrl:rd.result}; if(nm) nm.textContent="Файл: "+f.name; updPickedCount(); };
+    rd.readAsDataURL(f);
+  });
   $("#hw-add").addEventListener("click",function(){
     var cls=$("#hw-class").value, title=$("#hw-title").value.trim(), text=$("#hw-text").value.trim();
-    if(!title||!text){ toast("Заполни название и текст"); return; }
-    var hw=getHomework(); hw.push({id:"hw"+Date.now().toString(36),className:cls,title:title,text:text,date:new Date().toISOString()});
-    saveHomework(hw); renderAdmin(); toast("Домашнее задание опубликовано");
+    if(!title){ toast("Заполни название"); return; }
+    var tasks=[], ownTasks=[];
+    $$(".hw-bank-task input:checked").forEach(function(cb){ tasks.push(cb.value); });
+    $$("#hw-own-list .hw-own-item").forEach(function(it){ ownTasks.push(it.querySelector(".hw-own-txt").textContent); });
+    if(!tasks.length && !ownTasks.length && !text){ toast("Добавь задачи, свою задачу или текст"); return; }
+    var hw={id:"hw"+Date.now().toString(36),className:cls,title:title,text:text,date:new Date().toISOString()};
+    if(tasks.length) hw.tasks=tasks;
+    if(ownTasks.length) hw.ownTasks=ownTasks;
+    if(hwFileData) hw.file=hwFileData;
+    var arr=getHomework(); arr.push(hw);
+    saveHomework(arr); renderAdmin(); toast("Домашнее задание опубликовано");
   });
   // Скачивание базы преподавателей в Excel
   var dlT=$("#dl-teachers");
